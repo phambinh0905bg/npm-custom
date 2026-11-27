@@ -2,6 +2,7 @@
 
 import app from "./app.js";
 import internalCertificate from "./internal/certificate.js";
+import domainLogMapsSync from "./internal/domain-log-maps-sync.js";
 import internalIpRanges from "./internal/ip_ranges.js";
 import { global as logger } from "./logger.js";
 import { migrateUp } from "./migrate.js";
@@ -14,6 +15,15 @@ async function appStart() {
 	return migrateUp()
 		.then(setup)
 		.then(getCompiledSchema)
+		.then(() =>
+			// The nginx configs already on disk reference the per-domain log map
+			// variables, so the maps have to exist before nginx is asked to test the
+			// config. A failure here must not stop the backend from starting: the
+			// hosts keep their aggregate logs and the next save fixes the map.
+			domainLogMapsSync.sync().catch((err) => {
+				logger.error("Domain log map sync failed, continuing anyway:", err.message);
+			}),
+		)
 		.then(() => {
 			if (!IP_RANGES_FETCH_ENABLED) {
 				logger.info("IP Ranges fetch is disabled by environment variable");

@@ -1,4 +1,4 @@
-/data/logs/*_access.log /data/logs/*/access.log {
+/data/logs/*_access.log /data/logs/*/access.log /data/logs/domains/*.access.log {
     su npm npm
     create 0644
     weekly

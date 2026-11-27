@@ -19,7 +19,9 @@ mkdir -p \
 	/data/nginx \
 	/data/custom_ssl \
 	/data/logs \
+	/data/logs/domains \
 	/data/access \
+	/data/nginx/domains \
 	/data/nginx/default_host \
 	/data/nginx/default_www \
 	/data/nginx/proxy_host \

@@ -3,6 +3,7 @@ import net from "node:net";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import _ from "lodash";
+import { LOG_MAP_HOST_TYPES, removeLogMap, writeLogMap } from "../lib/domain-log-map.js";
 import errs from "../lib/error.js";
 import { assertAccessListRenderable, assertHostRenderable, isTokenSafe, unsafeValueError } from "../lib/nginx-values.js";
 import utils from "../lib/utils.js";
@@ -12,6 +13,10 @@ import certificateModel from "../models/certificate.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Where the generated per-domain access-log maps live. nginx.conf includes this
+// directory from the http block; see generateDomainLogMap().
+const DOMAIN_LOG_MAP_DIR = "/data/nginx/domains";
 
 const internalNginx = {
 	/**
@@ -41,6 +46,14 @@ const internalNginx = {
 				return internalNginx.deleteConfig(host_type, host, true);
 			})
 			.then(() => {
+				// The http-level map that names the per-domain log files has to exist
+				// before the server block that references it is tested, or nginx -t
+				// fails on an unknown variable name.
+				try {
+					internalNginx.generateDomainLogMap(host_type, host);
+				} catch (err) {
+					logger.error(`Could not write the domain log map for ${host_type} #${host.id}: ${err.message}`);
+				}
 				return internalNginx.generateConfig(host_type, host).then(
 					() => true,
 					(err) => {
@@ -344,6 +357,41 @@ const internalNginx = {
 	},
 
 	/**
+	 * Writes the per-domain access log map for one host.
+	 *
+	 * nginx resolves `$npm_domain_log_<type>_<id>` through a `map $host` that has to
+	 * live in the http block, not inside the server block, so it can't be part of
+	 * the host's own rendered config. It is generated into
+	 * /data/nginx/domains/, which nginx.conf includes from the http block.
+	 *
+	 * The map is what makes a Host header safe to log against: only the keys
+	 * written here can become a file name, and an unknown Host falls back to
+	 * "unknown" - so the request can never choose a path on disk.
+	 *
+	 * @param   {String}  host_type
+	 * @param   {Object}  host
+	 * @returns {Boolean} whether a map file was written
+	 */
+	generateDomainLogMap: (host_type, host) => {
+		const nice_host_type = internalNginx.getFileFriendlyHostType(host_type);
+		if (LOG_MAP_HOST_TYPES[nice_host_type] === undefined) {
+			return false;
+		}
+
+		const domains = Array.isArray(host.domain_names) ? host.domain_names : [];
+		if (!host.enabled || domains.length === 0) {
+			removeLogMap(DOMAIN_LOG_MAP_DIR, nice_host_type, host.id);
+			return false;
+		}
+
+		const written = writeLogMap(DOMAIN_LOG_MAP_DIR, nice_host_type, host.id, domains);
+		if (written) {
+			debug(logger, "Wrote domain log map for", nice_host_type, host.id);
+		}
+		return written;
+	},
+
+	/**
 	 * The templates rely on the certificate and access list relations being loaded.
 	 * Not every caller fetches them (or fetches them fully), and when they're missing
 	 * the config silently renders without SSL or without any access rules (#5919).
@@ -497,8 +545,26 @@ const internalNginx = {
 			if (delete_err_file) {
 				internalNginx.deleteFile(config_file_err);
 			}
+			// The domain log map is scoped to this host, so it goes with the config.
+			// It is regenerated on the next save, so removing it here keeps a disabled
+			// or deleted host from leaving an orphaned map behind in the http block.
+			internalNginx.deleteDomainLogMap(host_type, host);
 			resolve();
 		});
+	},
+
+	/**
+	 * Removes the per-domain access log map for one host.
+	 *
+	 * @param   {String}  host_type
+	 * @param   {Object}  [host]
+	 */
+	deleteDomainLogMap: (host_type, host) => {
+		const nice_host_type = internalNginx.getFileFriendlyHostType(host_type);
+		if (LOG_MAP_HOST_TYPES[nice_host_type] === undefined) {
+			return;
+		}
+		removeLogMap(DOMAIN_LOG_MAP_DIR, nice_host_type, typeof host === "undefined" ? 0 : host.id);
 	},
 
 	/**
