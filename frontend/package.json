@@ -41,7 +41,7 @@
 		"rooks": "^9.9.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.6.6",
+		"@biomejs/biome": "^2.6.8",
 		"@formatjs/cli": "^6.18.1",
 		"@tanstack/react-query-devtools": "^5.107.1",
 		"@testing-library/dom": "^10.4.2",
@@ -55,13 +55,13 @@
 		"@types/react-table": "^7.7.20",
 		"@vitejs/plugin-react": "^6.2.1",
 		"happy-dom": "^21.0.4",
-		"postcss": "^8.5.32",
+		"postcss": "^8.5.33",
 		"postcss-simple-vars": "^7.0.1",
 		"sass": "^1.108.2",
 		"tmp": "^0.2.7",
 		"typescript": "7.0.2",
 		"vite": "^8.3.8",
 		"vite-plugin-checker": "^1.0.0",
-		"vitest": "^5.1.0"
+		"vitest": "^5.1.1"
 	}
 }
