@@ -11,3 +11,6 @@ docker/dev/resolv.conf
 .claude
 test/__pycache__
 
+
+# UI verification screenshots captured while testing (local only)
+.ui-shots/
