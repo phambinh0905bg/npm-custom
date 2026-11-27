@@ -1,0 +1,58 @@
+{
+	"type": "object",
+	"description": "Result of applying a certificate to many hosts",
+	"required": ["certificate_id", "applied", "failed", "results"],
+	"additionalProperties": false,
+	"properties": {
+		"certificate_id": {
+			"type": "integer",
+			"example": 1
+		},
+		"applied": {
+			"type": "integer",
+			"description": "Number of hosts that were updated",
+			"example": 3
+		},
+		"failed": {
+			"type": "integer",
+			"description": "Number of hosts that were not updated",
+			"example": 0
+		},
+		"results": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["host_type", "host_id", "status"],
+				"properties": {
+					"host_type": {
+						"type": "string",
+						"enum": ["proxy", "redirection", "dead"]
+					},
+					"host_id": {
+						"type": "integer"
+					},
+					"status": {
+						"type": "string",
+						"enum": ["applied", "error"]
+					},
+					"domain_names": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"uncovered_domains": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"message": {
+						"type": "string",
+						"description": "Why this host was not updated, when status is error"
+					}
+				}
+			}
+		}
+	}
+}

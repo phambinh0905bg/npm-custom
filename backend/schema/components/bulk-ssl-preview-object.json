@@ -1,0 +1,71 @@
+{
+	"type": "object",
+	"description": "What applying a certificate to many hosts would change",
+	"required": ["certificate_id", "domain_names", "hosts"],
+	"additionalProperties": true,
+	"properties": {
+		"certificate_id": {
+			"type": "integer",
+			"example": 1
+		},
+		"nice_name": {
+			"type": "string",
+			"example": "example.com"
+		},
+		"domain_names": {
+			"type": "array",
+			"description": "The certificate's SAN list, read from the certificate file",
+			"items": {
+				"type": "string"
+			},
+			"example": ["*.example.com", "example.com"]
+		},
+		"expires_on": {
+			"type": "string",
+			"example": "2027-01-01 00:00:00"
+		},
+		"hosts": {
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/host"
+			}
+		}
+	},
+	"$defs": {
+		"host": {
+			"type": "object",
+			"required": ["host_type", "host_id", "domain_names", "uncovered_domains"],
+			"properties": {
+				"host_type": {
+					"type": "string",
+					"enum": ["proxy", "redirection", "dead"]
+				},
+				"host_id": {
+					"type": "integer"
+				},
+				"domain_names": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"enabled": {
+					"type": "boolean"
+				},
+				"current_certificate_id": {
+					"type": "integer"
+				},
+				"uncovered_domains": {
+					"type": "array",
+					"description": "Domains on this host that the certificate does not cover",
+					"items": {
+						"type": "string"
+					}
+				},
+				"will_change": {
+					"type": "boolean"
+				}
+			}
+		}
+	}
+}

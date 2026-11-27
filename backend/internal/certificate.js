@@ -1020,6 +1020,48 @@ const internalCertificate = {
 	},
 
 	/**
+	 * Reads the subjectAltName DNS entries out of a certificate file.
+	 *
+	 * Used to know which domains a certificate really covers. The stored
+	 * `domain_names` column is filled from the UI and can be incomplete (a custom
+	 * certificate uploaded with only a nice name), so anything that has to make a
+	 * decision about coverage reads the PEM instead.
+	 *
+	 * @param   {String} certificateFile  path to a PEM certificate (leaf first)
+	 * @returns {Promise<String[]>}
+	 */
+	getCertificateDomainsFromFile: async (certificateFile) => {
+		// -text decodes the extension block; openssl has no plain "list the DNS SANs"
+		// flag that works across the versions in the image.
+		const text = await utils.execFile("openssl", ["x509", "-in", certificateFile, "-noout", "-text"]);
+		const names = new Set();
+
+		const sanBlock = text.match(/X509v3 Subject Alternative Name:[^\n]*\n([^\n]*)/i);
+		if (sanBlock?.[1]) {
+			for (const entry of sanBlock[1].split(",")) {
+				const value = entry.trim();
+				if (value.toLowerCase().startsWith("dns:")) {
+					const name = value.slice(4).trim().toLowerCase();
+					if (name) {
+						names.add(name);
+					}
+				}
+			}
+		}
+
+		// A certificate with no SAN extension (or one openssl printed differently) is
+		// still usable if its CN names a host, which is what browsers fall back to.
+		if (names.size === 0) {
+			const info = await internalCertificate.getCertificateInfoFromFile(certificateFile);
+			if (info?.cn) {
+				names.add(info.cn.toLowerCase());
+			}
+		}
+
+		return [...names];
+	},
+
+	/**
 	 * Cleans the ssl keys from the meta object and sets them to "true"
 	 *
 	 * @param   {Object}  meta
