@@ -59,7 +59,7 @@ router
 					properties: {
 						type: {
 							type: "string",
-							enum: ["system", "letsencrypt", "host"],
+							enum: ["system", "letsencrypt", "host", "domain"],
 						},
 						host_type: {
 							anyOf: [
@@ -72,6 +72,9 @@ router
 						},
 						channel: {
 							anyOf: [{ type: "null" }, { type: "string", enum: ["access", "error"] }],
+						},
+						domain: {
+							anyOf: [{ type: "null" }, { type: "string", minLength: 1, maxLength: 253 }],
 						},
 						lines: {
 							anyOf: [{ type: "null" }, { type: "integer", minimum: 1, maximum: 1000 }],
@@ -95,6 +98,7 @@ router
 					host_type: typeof req.query.host_type === "string" ? req.query.host_type : null,
 					host_id: typeof req.query.host_id !== "undefined" ? req.query.host_id : null,
 					channel: typeof req.query.channel === "string" ? req.query.channel : null,
+					domain: typeof req.query.domain === "string" ? req.query.domain : null,
 					lines: typeof req.query.lines !== "undefined" ? req.query.lines : null,
 					level: typeof req.query.level === "string" ? req.query.level : null,
 					search: typeof req.query.search === "string" ? req.query.search : null,

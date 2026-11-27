@@ -15,7 +15,7 @@
 			"description": "Which log source to read",
 			"schema": {
 				"type": "string",
-				"enum": ["system", "letsencrypt", "host"]
+				"enum": ["system", "letsencrypt", "host", "domain"]
 			}
 		},
 		{
@@ -39,10 +39,19 @@
 		{
 			"in": "query",
 			"name": "channel",
-			"description": "Required when type=host - which log file to read (not to be confused with host_type=stream)",
+			"description": "Required when type=host or type=domain - which log file to read (not to be confused with host_type=stream). For type=domain with channel=error the owning host's error log is filtered by domain.",
 			"schema": {
 				"type": "string",
 				"enum": ["access", "error"]
+			}
+		},
+		{
+			"in": "query",
+			"name": "domain",
+			"description": "Required when type=domain - must be one of the domains returned by /logs/sources",
+			"schema": {
+				"type": "string",
+				"maxLength": 253
 			}
 		},
 		{

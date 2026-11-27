@@ -155,6 +155,16 @@
 				"$ref": "./paths/nginx/certificates/certID/renew/post.json"
 			}
 		},
+		"/nginx/certificates/{certID}/bulk-preview": {
+			"get": {
+				"$ref": "./paths/nginx/certificates/certID/bulk-preview/get.json"
+			}
+		},
+		"/nginx/certificates/{certID}/bulk-apply": {
+			"post": {
+				"$ref": "./paths/nginx/certificates/certID/bulk-apply/post.json"
+			}
+		},
 		"/nginx/certificates/{certID}/upload": {
 			"post": {
 				"$ref": "./paths/nginx/certificates/certID/upload/post.json"

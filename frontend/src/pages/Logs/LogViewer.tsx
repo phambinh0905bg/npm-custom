@@ -21,11 +21,15 @@ interface Selection {
 	type: LogSourceType;
 	hostType?: LogHostType;
 	hostId?: number;
+	domain?: string;
 }
 
 const encodeSelection = (selection: Selection): string => {
 	if (selection.type === "host") {
 		return `host:${selection.hostType}:${selection.hostId}`;
+	}
+	if (selection.type === "domain") {
+		return `domain:${selection.domain}`;
 	}
 	return selection.type;
 };
@@ -34,7 +38,12 @@ const decodeSelection = (value: string): Selection => {
 	if (value === "system" || value === "letsencrypt") {
 		return { type: value };
 	}
-	const [, hostType, hostId] = value.split(":");
+	const parts = value.split(":");
+	if (parts[0] === "domain") {
+		// The domain itself may contain dots but never a colon
+		return { type: "domain", domain: parts.slice(1).join(":") };
+	}
+	const [, hostType, hostId] = parts;
 	return { type: "host", hostType: hostType as LogHostType, hostId: Number(hostId) };
 };
 
@@ -72,12 +81,16 @@ export default function LogViewer() {
 		type: selection.type,
 		hostType: selection.hostType,
 		hostId: selection.hostId,
-		channel: selection.type === "host" ? channel : undefined,
+		domain: selection.type === "domain" ? selection.domain : undefined,
+		channel: selection.type === "host" || selection.type === "domain" ? channel : undefined,
 		lines,
 		level: selection.type === "system" && level ? level : undefined,
 		search: search || undefined,
 		live,
 	});
+
+	// One entry per domain served by a host: each has its own access log file.
+	const domainOptions = useMemo(() => sourcesQuery.data?.domains || [], [sourcesQuery.data]);
 
 	const hostGroups = useMemo(() => {
 		if (!sourcesQuery.data) {
@@ -127,6 +140,15 @@ export default function LogViewer() {
 						>
 							<option value="system">{intl.formatMessage({ id: "logs.source.system" })}</option>
 							<option value="letsencrypt">{intl.formatMessage({ id: "lets-encrypt" })}</option>
+							{domainOptions.length > 0 && (
+								<optgroup label={intl.formatMessage({ id: "logs.source.domain" })}>
+									{domainOptions.map((option) => (
+										<option key={option.domain} value={`domain:${option.domain}`}>
+											{option.domain}
+										</option>
+									))}
+								</optgroup>
+							)}
 							{hostGroups.map((group) => (
 								<optgroup key={group.type} label={intl.formatMessage({ id: group.labelId })}>
 									{group.options.map((option) => (
@@ -138,7 +160,7 @@ export default function LogViewer() {
 							))}
 						</select>
 					</div>
-					{selection.type === "host" && (
+					{["host", "domain"].includes(selection.type) && (
 						<div className="col-auto">
 							<div className="btn-group" role="group">
 								<button

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { domainLogFileName } from "../lib/domain-log-map.js";
 import errs from "../lib/error.js";
 import internalDeadHost from "./dead-host.js";
 import internalProxyHost from "./proxy-host.js";
@@ -19,6 +20,13 @@ const HOST_FILE_PREFIX = {
 	dead: "dead-host",
 	stream: "stream",
 };
+
+// Per-domain access logs, written by the access_log line the templates add for
+// every domain in a host's server_name (templates/_domain_log_map.conf). The
+// file name is the domain itself, so the path is only built after the requested
+// domain has been matched against the list of domains this server actually
+// serves - a client-supplied value never reaches the filesystem unchecked.
+const DOMAIN_LOG_DIR = "/data/logs/domains";
 
 const DEFAULT_LINES = 200;
 const MAX_LINES = 1000;
@@ -137,11 +145,51 @@ const toHostOptions = (rows) =>
 		label: Array.isArray(row.domain_names) ? row.domain_names.join(", ") : `Host #${row.id}`,
 	}));
 
+/**
+ * Collects every domain name served by any host, with the host that owns it.
+ * A domain can only belong to one host (the API rejects duplicates), so this
+ * doubles as the allow-list used to resolve a per-domain log file safely.
+ *
+ * @param   {Object} hosts  { proxy: [], redirection: [], dead: [] }
+ * @returns {Array<{domain: String, hostType: String, hostId: Number}>}
+ */
+const collectDomains = (hosts) => {
+	const seen = new Map();
+	for (const [hostType, rows] of Object.entries(hosts)) {
+		for (const row of rows) {
+			const names = Array.isArray(row.domain_names) ? row.domain_names : [];
+			for (const domain of names) {
+				if (!seen.has(domain)) {
+					seen.set(domain, { domain, host_type: hostType, host_id: row.id });
+				}
+			}
+		}
+	}
+	return [...seen.values()].sort((a, b) => a.domain.localeCompare(b.domain));
+};
+
+/**
+ * Filters error-log lines down to the ones nginx attributed to `domain`.
+ *
+ * nginx writes error_log per server block, not per Host header, so there is no
+ * per-domain error file to read. Lines it writes while handling a request do
+ * carry `server: <matched name>` or `host: "<request Host>"`, which is what
+ * makes a per-domain view of a shared error log possible.
+ *
+ * @param   {String[]} lines
+ * @param   {String}   domain
+ * @returns {String[]}
+ */
+const filterDomainErrorLines = (lines, domain) => {
+	const needles = [`server: ${domain}`, `host: "${domain}"`, `host: "${domain}:`];
+	return lines.filter((line) => needles.some((needle) => line.includes(needle)));
+};
+
 const internalLogViewer = {
 	/**
 	 * Lists the log sources available for the log viewer: the system (backend)
-	 * log, the Let's Encrypt (certbot) log, and one entry per host the caller
-	 * can see, for each host type.
+	 * log, the Let's Encrypt (certbot) log, one entry per host the caller can
+	 * see for each host type, and one entry per domain name those hosts serve.
 	 *
 	 * @param   {Access} access
 	 * @returns {Promise}
@@ -156,9 +204,16 @@ const internalLogViewer = {
 			internalStream.getAll(access),
 		]);
 
+		const domains = collectDomains({
+			proxy: proxyHosts,
+			redirection: redirectionHosts,
+			dead: deadHosts,
+		});
+
 		return {
 			system: { label: "System" },
 			letsencrypt: { label: "Let's Encrypt" },
+			domains,
 			hosts: {
 				proxy: toHostOptions(proxyHosts),
 				redirection: toHostOptions(redirectionHosts),
@@ -177,10 +232,11 @@ const internalLogViewer = {
 	 *
 	 * @param   {Access} access
 	 * @param   {Object} data
-	 * @param   {String} data.type        "system" | "letsencrypt" | "host"
+	 * @param   {String} data.type        "system" | "letsencrypt" | "host" | "domain"
 	 * @param   {String} [data.host_type] "proxy" | "redirection" | "dead" | "stream"
 	 * @param   {Number} [data.host_id]
 	 * @param   {String} [data.channel]   "access" | "error"
+	 * @param   {String} [data.domain]    required when type=domain
 	 * @param   {Number} [data.lines]
 	 * @param   {String} [data.level]
 	 * @param   {String} [data.search]
@@ -189,12 +245,56 @@ const internalLogViewer = {
 	tail: async (access, data) => {
 		await access.can("logs:list");
 
-		const filePath = resolveFilePath(data);
+		// A domain log is resolved through the database, never from the raw request
+		// value: the domain has to be one this server actually serves before it can
+		// name a file.
+		let filePath;
+		let domainErrorFilter = null;
+		if (data.type === "domain") {
+			const [proxyHosts, redirectionHosts, deadHosts] = await Promise.all([
+				internalProxyHost.getAll(access),
+				internalRedirectionHost.getAll(access),
+				internalDeadHost.getAll(access),
+			]);
+			const known = collectDomains({
+				proxy: proxyHosts,
+				redirection: redirectionHosts,
+				dead: deadHosts,
+			}).find((entry) => entry.domain === data.domain);
+
+			if (!known) {
+				throw new errs.ValidationError("Unknown domain");
+			}
+
+			if (data.channel === "error") {
+				// There is no per-domain error file: nginx logs errors per server block.
+				// Read the owning host's error log and keep the lines it attributed to
+				// this domain.
+				filePath = resolveFilePath({
+					type: "host",
+					host_type: known.host_type,
+					host_id: known.host_id,
+					channel: "error",
+				});
+				domainErrorFilter = data.domain;
+			} else {
+				// Same name the generated map uses: a wildcard becomes "wildcard.example.com",
+				// otherwise the file for "*.example.com" would be unreachable from here.
+				filePath = `${DOMAIN_LOG_DIR}/${domainLogFileName(known.domain)}.access.log`;
+			}
+		} else {
+			filePath = resolveFilePath(data);
+		}
+
 		const lines = Math.min(Math.max(data.lines || DEFAULT_LINES, 1), MAX_LINES);
+		// A filtered error log needs a wider slice than the requested line count,
+		// otherwise a domain with few problems returns a handful of matches out of an
+		// arbitrarily small window and looks like the log stopped.
+		const scanLines = domainErrorFilter ? MAX_LINES : lines;
 
 		let result;
 		try {
-			result = await readLastLines(filePath, lines);
+			result = await readLastLines(filePath, scanLines);
 		} catch (err) {
 			if (err.code === "ENOENT") {
 				return { lines: [], size: 0, truncated: false, exists: false };
@@ -203,6 +303,10 @@ const internalLogViewer = {
 		}
 
 		let outputLines = result.lines;
+
+		if (domainErrorFilter) {
+			outputLines = filterDomainErrorLines(outputLines, domainErrorFilter).slice(-lines);
+		}
 
 		// Only the system log is written in our own "LEVEL   [scope]" format - level
 		// filtering on nginx/certbot lines would just match nothing and look like an

@@ -1,7 +1,7 @@
 {
 	"type": "object",
 	"description": "Available log sources for the log viewer",
-	"required": ["system", "letsencrypt", "hosts"],
+	"required": ["system", "letsencrypt", "domains", "hosts"],
 	"additionalProperties": false,
 	"properties": {
 		"system": {
@@ -19,6 +19,28 @@
 				"label": {
 					"type": "string",
 					"example": "Let's Encrypt"
+				}
+			}
+		},
+		"domains": {
+			"type": "array",
+			"description": "Every domain name served by a proxy, redirection or 404 host, with the host that owns it",
+			"items": {
+				"type": "object",
+				"required": ["domain", "host_type", "host_id"],
+				"additionalProperties": false,
+				"properties": {
+					"domain": {
+						"type": "string",
+						"example": "example.com"
+					},
+					"host_type": {
+						"type": "string",
+						"enum": ["proxy", "redirection", "dead"]
+					},
+					"host_id": {
+						"$ref": "../common.json#/properties/id"
+					}
 				}
 			}
 		},

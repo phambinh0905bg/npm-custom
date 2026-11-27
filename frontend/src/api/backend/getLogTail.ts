@@ -6,6 +6,8 @@ export interface GetLogTailParams {
 	hostType?: LogHostType;
 	hostId?: number;
 	channel?: LogChannel;
+	// Required when type is "domain"
+	domain?: string;
 	lines?: number;
 	level?: string;
 	search?: string;

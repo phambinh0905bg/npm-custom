@@ -149,6 +149,84 @@
 	"auto": {
 		"defaultMessage": "Tự động"
 	},
+	"bulk-ssl.allow-uncovered": {
+		"defaultMessage": "Vẫn gán cho host có tên miền ngoài phạm vi chứng chỉ"
+	},
+	"bulk-ssl.allow-uncovered-short": {
+		"defaultMessage": "Gồm cả domain ngoài phạm vi"
+	},
+	"bulk-ssl.already-set": {
+		"defaultMessage": "Đã dùng chứng chỉ này"
+	},
+	"bulk-ssl.already-set-short": {
+		"defaultMessage": "Đang dùng"
+	},
+	"bulk-ssl.apply": {
+		"defaultMessage": "Gán chứng chỉ"
+	},
+	"bulk-ssl.certificate": {
+		"defaultMessage": "Chứng chỉ"
+	},
+	"bulk-ssl.clear-selection": {
+		"defaultMessage": "Bỏ chọn"
+	},
+	"bulk-ssl.column.certificate": {
+		"defaultMessage": "Thay đổi chứng chỉ"
+	},
+	"bulk-ssl.column.domains": {
+		"defaultMessage": "Tên miền"
+	},
+	"bulk-ssl.column.type": {
+		"defaultMessage": "Loại"
+	},
+	"bulk-ssl.disabled": {
+		"defaultMessage": "Host đang tắt - cấu hình chưa được tạo lại lúc này."
+	},
+	"bulk-ssl.expires": {
+		"defaultMessage": "hết hạn"
+	},
+	"bulk-ssl.force-ssl": {
+		"defaultMessage": "Buộc SSL (chuyển hướng http sang https)"
+	},
+	"bulk-ssl.force-ssl-short": {
+		"defaultMessage": "Buộc SSL"
+	},
+	"bulk-ssl.hosts": {
+		"defaultMessage": "Các host"
+	},
+	"bulk-ssl.hsts": {
+		"defaultMessage": "HSTS"
+	},
+	"bulk-ssl.no-certificates": {
+		"defaultMessage": "Chưa có chứng chỉ nào. Hãy thêm ở trang Chứng chỉ trước."
+	},
+	"bulk-ssl.no-hosts": {
+		"defaultMessage": "Không có host nào trên máy chủ này dùng domain mà chứng chỉ bao phủ."
+	},
+	"bulk-ssl.options": {
+		"defaultMessage": "Tùy chọn"
+	},
+	"bulk-ssl.result-summary": {
+		"defaultMessage": "Đã gán: {applied}, lỗi: {failed}"
+	},
+	"bulk-ssl.selected": {
+		"defaultMessage": "đã chọn"
+	},
+	"bulk-ssl.title": {
+		"defaultMessage": "Gán chứng chỉ cho nhiều host"
+	},
+	"bulk-ssl.uncovered": {
+		"defaultMessage": "Chứng chỉ không bao phủ:"
+	},
+	"bulk-ssl.warning": {
+		"defaultMessage": "Mỗi host được chọn sẽ được lưu và cấu hình nginx tạo lại. Các thiết lập khác giữ nguyên."
+	},
+	"bulk.select-all": {
+		"defaultMessage": "Chọn tất cả"
+	},
+	"bulk.select-row": {
+		"defaultMessage": "Chọn dòng {id}"
+	},
 	"cancel": {
 		"defaultMessage": "Hủy"
 	},
@@ -184,6 +262,9 @@
 	},
 	"certificates": {
 		"defaultMessage": "Chứng chỉ"
+	},
+	"certificates.apply-to-hosts": {
+		"defaultMessage": "Gán cho các proxy host"
 	},
 	"certificates.custom": {
 		"defaultMessage": "Chứng chỉ tùy chỉnh"
@@ -542,6 +623,9 @@
 	"logs.source": {
 		"defaultMessage": "Nguồn"
 	},
+	"logs.source.domain": {
+		"defaultMessage": "Tên miền"
+	},
 	"logs.source.system": {
 		"defaultMessage": "Hệ thống"
 	},
@@ -679,6 +763,9 @@
 	},
 	"proxy-hosts": {
 		"defaultMessage": "Máy chủ proxy"
+	},
+	"proxy-hosts.bulk-ssl": {
+		"defaultMessage": "Gán chứng chỉ"
 	},
 	"proxy-hosts.count": {
 		"defaultMessage": "{count} máy chủ proxy"

@@ -149,6 +149,84 @@
 	"auto": {
 		"defaultMessage": "Auto"
 	},
+	"bulk-ssl.allow-uncovered": {
+		"defaultMessage": "Also apply to hosts with domains the certificate does not cover"
+	},
+	"bulk-ssl.allow-uncovered-short": {
+		"defaultMessage": "Include out-of-scope domains"
+	},
+	"bulk-ssl.already-set": {
+		"defaultMessage": "Already using this certificate"
+	},
+	"bulk-ssl.already-set-short": {
+		"defaultMessage": "In use"
+	},
+	"bulk-ssl.apply": {
+		"defaultMessage": "Apply certificate"
+	},
+	"bulk-ssl.certificate": {
+		"defaultMessage": "Certificate"
+	},
+	"bulk-ssl.clear-selection": {
+		"defaultMessage": "Clear selection"
+	},
+	"bulk-ssl.column.certificate": {
+		"defaultMessage": "Certificate change"
+	},
+	"bulk-ssl.column.domains": {
+		"defaultMessage": "Domains"
+	},
+	"bulk-ssl.column.type": {
+		"defaultMessage": "Type"
+	},
+	"bulk-ssl.disabled": {
+		"defaultMessage": "Host is disabled - its config is not regenerated now."
+	},
+	"bulk-ssl.expires": {
+		"defaultMessage": "expires"
+	},
+	"bulk-ssl.force-ssl": {
+		"defaultMessage": "Force SSL (redirect http to https)"
+	},
+	"bulk-ssl.force-ssl-short": {
+		"defaultMessage": "Force SSL"
+	},
+	"bulk-ssl.hosts": {
+		"defaultMessage": "Hosts"
+	},
+	"bulk-ssl.hsts": {
+		"defaultMessage": "HSTS"
+	},
+	"bulk-ssl.no-certificates": {
+		"defaultMessage": "No certificate yet. Add one on the Certificates page first."
+	},
+	"bulk-ssl.no-hosts": {
+		"defaultMessage": "No host on this server uses a domain covered by this certificate."
+	},
+	"bulk-ssl.options": {
+		"defaultMessage": "Options"
+	},
+	"bulk-ssl.result-summary": {
+		"defaultMessage": "Applied: {applied}, failed: {failed}"
+	},
+	"bulk-ssl.selected": {
+		"defaultMessage": "selected"
+	},
+	"bulk-ssl.title": {
+		"defaultMessage": "Apply certificate to hosts"
+	},
+	"bulk-ssl.uncovered": {
+		"defaultMessage": "Not covered by this certificate:"
+	},
+	"bulk-ssl.warning": {
+		"defaultMessage": "Each selected host is saved and its nginx config regenerated. Other settings are left unchanged."
+	},
+	"bulk.select-all": {
+		"defaultMessage": "Select all"
+	},
+	"bulk.select-row": {
+		"defaultMessage": "Select row {id}"
+	},
 	"cancel": {
 		"defaultMessage": "Cancel"
 	},
@@ -184,6 +262,9 @@
 	},
 	"certificates": {
 		"defaultMessage": "Certificates"
+	},
+	"certificates.apply-to-hosts": {
+		"defaultMessage": "Apply to proxy hosts"
 	},
 	"certificates.custom": {
 		"defaultMessage": "Custom Certificate"
@@ -542,6 +623,9 @@
 	"logs.source": {
 		"defaultMessage": "Source"
 	},
+	"logs.source.domain": {
+		"defaultMessage": "Domain"
+	},
 	"logs.source.system": {
 		"defaultMessage": "System"
 	},
@@ -679,6 +763,9 @@
 	},
 	"proxy-hosts": {
 		"defaultMessage": "Proxy Hosts"
+	},
+	"proxy-hosts.bulk-ssl": {
+		"defaultMessage": "Assign certificate"
 	},
 	"proxy-hosts.count": {
 		"defaultMessage": "{count} {count, plural, one {Proxy Host} other {Proxy Hosts}}"
