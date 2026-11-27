@@ -1,7 +1,12 @@
 import { IconDotsVertical, IconEdit, IconFileText, IconPower, IconTrash } from "@tabler/icons-react";
-import { createColumnHelper, type SortingState, useTable } from "@tanstack/react-table";
+import {
+	createColumnHelper,
+	type RowSelectionState,
+	type SortingState,
+	useTable,
+} from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import type { ProxyHost } from "src/api/backend";
+import type { BulkSslTarget, ProxyHost } from "src/api/backend";
 import {
 	AccessListFormatter,
 	CertificateFormatter,
@@ -25,6 +30,10 @@ interface Props {
 	onDisableToggle?: (id: number, enabled: boolean) => void;
 	onLogs?: (id: number) => void;
 	onNew?: () => void;
+	// Bulk SSL: when onSelectionChange is given, every row gets a checkbox. The
+	// host type travels with the id - a proxy host #1 and a 404 host #1 are
+	// different hosts, and an id alone cannot tell them apart.
+	onSelectionChange?: (targets: BulkSslTarget[]) => void;
 }
 export default function Table({
 	data,
@@ -35,10 +44,54 @@ export default function Table({
 	onLogs,
 	onNew,
 	isFiltered,
+	onSelectionChange,
 }: Props) {
+	const selectable = typeof onSelectionChange === "function";
 	const columnHelper = createColumnHelper<Features, ProxyHost>();
 	const columns = useMemo(
 		() => [
+			// Bulk-action checkbox column. Built as a display column so the table never
+			// relies on a data field for it; the id "select" is what the header and the
+			// empty-row colSpan logic look for.
+			...(selectable
+				? [
+						columnHelper.display({
+							id: "select",
+							enableSorting: false,
+							meta: {
+								className: "w-1",
+							},
+							header: ({ table }: any) => (
+								<input
+									type="checkbox"
+									className="form-check-input m-0"
+									aria-label={intl.formatMessage({ id: "bulk.select-all" })}
+									checked={table.getIsAllPageRowsSelected()}
+									ref={(el: HTMLInputElement | null) => {
+										if (el) {
+											el.indeterminate =
+												!table.getIsAllPageRowsSelected() && table.getIsSomePageRowsSelected();
+										}
+									}}
+									onChange={table.getToggleAllPageRowsSelectedHandler()}
+								/>
+							),
+							cell: ({ row }: any) => (
+								<input
+									type="checkbox"
+									className="form-check-input m-0"
+									aria-label={intl.formatMessage(
+										{ id: "bulk.select-row" },
+										{ id: row.original.id },
+									)}
+									checked={row.getIsSelected()}
+									disabled={!row.getCanSelect()}
+									onChange={row.getToggleSelectedHandler()}
+								/>
+							),
+						}),
+					]
+				: []),
 			columnHelper.accessor((row: any) => row.owner, {
 				id: "owner",
 				enableSorting: false,
@@ -176,17 +229,35 @@ export default function Table({
 				},
 			}),
 		],
-		[columnHelper, onEdit, onDisableToggle, onDelete, onLogs],
+		[columnHelper, onEdit, onDisableToggle, onDelete, onLogs, selectable],
 	);
 
 	const [sorting, setSorting] = useState<SortingState>([]);
+	const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
+	// Rows are identified by their host id, so a selection survives re-sorting and
+	// a refetch as long as the host still exists.
 	const tableInstance = useTable({
 		features,
 		columns,
 		data,
-		state: { sorting },
+		state: { sorting, rowSelection },
 		onSortingChange: setSorting,
+		onRowSelectionChange: (updater) => {
+			setRowSelection((previous) => {
+				const next = typeof updater === "function" ? updater(previous) : updater;
+				// Report ids (not row indexes) upward: the parent cache keys are host ids.
+				onSelectionChange?.(
+					Object.entries(next)
+						.filter(([, selected]) => selected)
+						.map(([id]) => Number(id))
+						.filter((id) => !Number.isNaN(id))
+						.map((id) => ({ hostType: "proxy" as const, hostId: id })),
+				);
+				return next;
+			});
+		},
+		getRowId: (row: any) => String(row.id),
 		meta: {
 			isFetching,
 		},

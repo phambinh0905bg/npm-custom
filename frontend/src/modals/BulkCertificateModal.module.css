@@ -1,0 +1,179 @@
+/* Fixed-height layout for the bulk certificate dialog.
+ *
+ * Three zones, in this order:
+ *   1. certificate picker - one compact line per certificate, capped in height
+ *   2. host list          - the only zone that grows; the only one that scrolls
+ *   3. options            - one row of checkboxes, always visible
+ *
+ * The host list is the point of the dialog, so every other zone is sized to its
+ * smallest useful height. The dialog body is sized in vh, so it keeps the same
+ * height whether it shows two hosts or twenty, and only zone 2 ever shows a
+ * scrollbar.
+ */
+
+.body {
+	height: 76vh;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	gap: 0.5rem;
+}
+
+.zone {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border: 1px solid var(--tblr-border-color);
+	border-radius: var(--tblr-border-radius);
+	background: var(--tblr-bg-surface);
+}
+
+/* Zone 1: the certificate picker. Two rows' worth is plenty; a longer list
+   scrolls inside this small box rather than shrinking the host list. */
+.certZone {
+	flex: 0 0 auto;
+	max-height: 7.5rem;
+}
+
+/* Zone 2: the host list. Takes all remaining height. */
+.hostZone {
+	flex: 1 1 auto;
+	min-height: 7rem;
+}
+
+/* Zone 3: options, a single row. */
+.optionsZone {
+	flex: 0 0 auto;
+}
+
+.zoneHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.2rem 0.6rem;
+	border-bottom: 1px solid var(--tblr-border-color);
+	background: var(--tblr-bg-surface-secondary);
+	border-radius: var(--tblr-border-radius) var(--tblr-border-radius) 0 0;
+	font-weight: 600;
+	font-size: 0.6875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--tblr-secondary);
+	flex: 0 0 auto;
+}
+
+.zoneBody {
+	overflow-y: auto;
+	min-height: 0;
+	flex: 1 1 auto;
+}
+
+/* One row of checkboxes; the explanation that used to sit here is now a
+   tooltip on the row (see .hint), so it costs no vertical space. */
+.optionsRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.15rem 1.25rem;
+	padding: 0.35rem 0.6rem;
+	flex: 1 1 auto;
+}
+
+.optionsRow :global(.form-check) {
+	margin-bottom: 0;
+}
+
+.hint {
+	color: var(--tblr-secondary);
+	font-size: 0.6875rem;
+	margin-left: auto;
+	cursor: help;
+}
+
+/* Certificate rows: a single line - radio, name, expiry, SAN badges. */
+.certOption {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.25rem 0.6rem;
+	cursor: pointer;
+	border: 0;
+	border-bottom: 1px solid var(--tblr-border-color);
+	background: transparent;
+	width: 100%;
+	text-align: left;
+	font-size: 0.8125rem;
+}
+
+.certOption:last-child {
+	border-bottom: 0;
+}
+
+.certOption:hover {
+	background: var(--tblr-bg-surface-secondary);
+}
+
+.certOptionActive,
+.certOptionActive:hover {
+	background: var(--tblr-primary-lt);
+}
+
+.certName {
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 40%;
+}
+
+.certMeta {
+	flex: 0 0 auto;
+	font-size: 0.6875rem;
+	white-space: nowrap;
+}
+
+.certDomains {
+	display: flex;
+	gap: 0.2rem;
+	flex: 1 1 auto;
+	overflow: hidden;
+	margin: 0;
+}
+
+.certBadge {
+	font-weight: 400;
+	font-size: 0.625rem;
+	line-height: 1.25;
+	padding: 0.05rem 0.3rem;
+	white-space: nowrap;
+}
+
+/* The host list keeps its own scrollbar and a sticky table header. */
+.hostTable {
+	margin-bottom: 0;
+}
+
+.hostTable thead th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--tblr-bg-surface);
+	padding-top: 0.3rem;
+	padding-bottom: 0.3rem;
+}
+
+.hostTable td {
+	padding-top: 0.25rem;
+	padding-bottom: 0.25rem;
+}
+
+.hostDomains {
+	word-break: break-word;
+}
+
+/* Keep the narrow columns on one line: wrapped labels were making every row
+   49px tall and halving the number of hosts that fit. */
+.hostMeta {
+	white-space: nowrap;
+	font-size: 0.75rem;
+}

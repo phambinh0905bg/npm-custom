@@ -2,6 +2,7 @@ import {
 	columnVisibilityFeature,
 	createSortedRowModel,
 	metaHelper,
+	rowSelectionFeature,
 	rowSortingFeature,
 	tableFeatures,
 } from "@tanstack/react-table";
@@ -26,6 +27,9 @@ const features = tableFeatures({
 	rowSortingFeature,
 	sortedRowModel: createSortedRowModel(),
 	columnVisibilityFeature,
+	// Registered so the proxy host / certificate tables can offer bulk actions.
+	// A table that doesn't opt in simply never renders the checkbox column.
+	rowSelectionFeature,
 	columnMeta: metaHelper<ColumnMeta>(),
 	tableMeta: metaHelper<TableMeta>(),
 });

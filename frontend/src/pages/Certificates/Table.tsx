@@ -1,4 +1,4 @@
-import { IconDotsVertical, IconDownload, IconRefresh, IconTrash } from "@tabler/icons-react";
+import { IconCertificate, IconDotsVertical, IconDownload, IconRefresh, IconTrash } from "@tabler/icons-react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type { Certificate } from "src/api/backend";
@@ -23,8 +23,9 @@ interface Props {
 	onDelete?: (id: number) => void;
 	onRenew?: (id: number) => void;
 	onDownload?: (id: number) => void;
+	onApplyToHosts?: (id: number) => void;
 }
-export default function Table({ data, isFetching, onDelete, onRenew, onDownload, isFiltered }: Props) {
+export default function Table({ data, isFetching, onDelete, onRenew, onDownload, onApplyToHosts, isFiltered }: Props) {
 	const columnHelper = createColumnHelper<Features, Certificate>();
 	const columns = useMemo(
 		() => [
@@ -128,6 +129,17 @@ export default function Table({ data, isFetching, onDelete, onRenew, onDownload,
 									<IconRefresh size={16} />
 									<T id="action.renew" />
 								</a>
+								<a
+									className="dropdown-item"
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										onApplyToHosts?.(info.row.original.id);
+									}}
+								>
+									<IconCertificate size={16} />
+									<T id="certificates.apply-to-hosts" />
+								</a>
 								<HasPermission section={CERTIFICATES} permission={MANAGE} hideError>
 									<a
 										className="dropdown-item"
@@ -162,7 +174,7 @@ export default function Table({ data, isFetching, onDelete, onRenew, onDownload,
 				},
 			}),
 		],
-		[columnHelper, onDelete, onRenew, onDownload],
+		[columnHelper, onDelete, onRenew, onDownload, onApplyToHosts],
 	);
 
 	const tableInstance = useTable({

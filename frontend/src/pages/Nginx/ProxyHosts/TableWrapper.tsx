@@ -2,18 +2,25 @@ import { IconHelp, IconSearch } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Alert from "react-bootstrap/Alert";
-import { deleteProxyHost, toggleProxyHost } from "src/api/backend";
+import { type BulkSslTarget, deleteProxyHost, toggleProxyHost } from "src/api/backend";
 import { Button, HasPermission, LoadingPage } from "src/components";
 import { useProxyHosts } from "src/hooks";
 import { T } from "src/locale";
-import { showDeleteConfirmModal, showHelpModal, showHostLogsModal, showProxyHostModal } from "src/modals";
-import { MANAGE, PROXY_HOSTS } from "src/modules/Permissions";
+import {
+	showBulkCertificateModal,
+	showDeleteConfirmModal,
+	showHelpModal,
+	showHostLogsModal,
+	showProxyHostModal,
+} from "src/modals";
+import { CERTIFICATES, MANAGE, PROXY_HOSTS } from "src/modules/Permissions";
 import { showObjectSuccess } from "src/notifications";
 import Table from "./Table";
 
 export default function TableWrapper() {
 	const queryClient = useQueryClient();
 	const [search, setSearch] = useState("");
+	const [selection, setSelection] = useState<BulkSslTarget[]>([]);
 	const { isFetching, isLoading, isError, error, data } = useProxyHosts(["owner", "access_list", "certificate"]);
 
 	if (isLoading) {
@@ -79,6 +86,28 @@ export default function TableWrapper() {
 								<Button size="sm" onClick={() => showHelpModal("ProxyHosts", "lime")}>
 									<IconHelp size={20} />
 								</Button>
+								{/* Bulk actions live in the header next to Add: they only appear once a
+								    row is selected, so the toolbar stays a single row and the table is
+								    not pushed down by a second header bar. */}
+								{selection.length > 0 && (
+									<>
+										<span className="text-secondary small ms-1">
+											{selection.length} <T id="bulk-ssl.selected" />
+										</span>
+										<HasPermission section={CERTIFICATES} permission={MANAGE} hideError>
+											<Button
+												size="sm"
+												className="btn-pink"
+												onClick={() => showBulkCertificateModal(null, selection)}
+											>
+												<T id="proxy-hosts.bulk-ssl" />
+											</Button>
+										</HasPermission>
+										<Button size="sm" actionType="secondary" onClick={() => setSelection([])}>
+											<T id="bulk-ssl.clear-selection" />
+										</Button>
+									</>
+								)}
 								<HasPermission section={PROXY_HOSTS} permission={MANAGE} hideError>
 									{data?.length ? (
 										<Button
@@ -96,6 +125,7 @@ export default function TableWrapper() {
 				</div>
 				<Table
 					data={filtered ?? data ?? []}
+					onSelectionChange={setSelection}
 					isFiltered={!!search}
 					isFetching={isFetching}
 					onEdit={(id: number) => showProxyHostModal(id)}

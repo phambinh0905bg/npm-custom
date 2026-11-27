@@ -6,6 +6,7 @@ import { Button, HasPermission, LoadingPage } from "src/components";
 import { useCertificates } from "src/hooks";
 import { T } from "src/locale";
 import {
+	showBulkCertificateModal,
 	showCustomCertificateModal,
 	showDeleteConfirmModal,
 	showDNSCertificateModal,
@@ -146,6 +147,7 @@ export default function TableWrapper() {
 					isFetching={isFetching}
 					onRenew={showRenewCertificateModal}
 					onDownload={handleDownload}
+					onApplyToHosts={(id: number) => showBulkCertificateModal(id)}
 					onDelete={(id: number) =>
 						showDeleteConfirmModal({
 							title: <T id="object.delete" tData={{ object: "certificate" }} />,
